@@ -1,0 +1,43 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+.venv/
+.ipynb_checkpoints/
+
+# C++
+*.o
+*.out
+*.class
+*.exe
+*.log
+*.obj
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# IDEs
+# PyCharm
+.idea/
+*.iml
+workspace.xml
+tasks.xml
+deployment.xml
+usage.statistics.xml
+# CLion
+cmake-build-*/
+
+# MacOS
+.DS_Store
+
+# Other
+.vscode/
+*.swp
+*.swo
