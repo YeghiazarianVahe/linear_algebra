@@ -1,4 +1,4 @@
-# Linear Algebra Exercises
+# Linear Algebra
 
 ## Overview
 This repository is a comprehensive collection of theory, tasks, and code implementations aimed at building a strong foundation in linear algebra. Exercises are implemented in both **Python** and **C++**, focusing on theoretical understanding and practical applications.
@@ -72,7 +72,7 @@ This repository is a comprehensive collection of theory, tasks, and code impleme
 
 ## Repository Structure
 ```plaintext
-linear-algebra-exercises/
+linear-algebra/
 │
 ├── Vectors/
 │   ├── Python/
