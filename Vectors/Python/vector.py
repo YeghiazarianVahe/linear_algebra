@@ -48,15 +48,3 @@ def read_vector():
             return Vector(items)
         except ValueError as e:
             print(f"Invalid input: {e}")
-
-if __name__ == "__main__":
-    vector1 = read_vector()
-    vector2 = read_vector()
-    scalar = int(input("Enter a scalar value: "))
-
-    print(f"Sum of vectors: {vector1 + vector2}")
-    print(f"Subtraction of vectors: {vector1 - vector2}")
-    print(f"Scalar multiplication with {scalar}: {vector1.scale(scalar)}")
-    print(f"Dot product: {vector1.dot_product(vector2)}")
-    print(f"Cross product (3D): {vector1.cross_product(vector2)}")
-    print(f"Angle between vectors (in radians): {vector1.angle(vector2)}")
