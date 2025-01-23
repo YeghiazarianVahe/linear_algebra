@@ -1,156 +1,200 @@
 #include "linear_algebra_system.h"
-#include <algorithm>
+#include <stdexcept>
 #include <cmath>
-#include <iostream>
+#include <algorithm>
+std::vector<double> gaussianElimination(const std::vector<std::vector<double>>& A,
+    const std::vector<double>& b)
+{
+    int N = (int)A.size();
+    if (N == 0 || A[0].size() != (size_t)N || b.size() != (size_t)N)
+        throw std::runtime_error("Dimension mismatch in gaussianElimination.");
 
-LinearAlgebraSystem::LinearAlgebraSystem(const std::vector<std::vector<double>>& matrix, const std::vector<double>& vector)
-    : A(matrix), b(vector) {
-}
+    std::vector<std::vector<double>> mat(A);
+    std::vector<double> rhs(b);
 
-std::vector<double> LinearAlgebraSystem::gaussianElimination() {
-    int n = A.size();
-    std::vector<std::vector<double>> localA = A;
-    std::vector<double> localB = b;
-
-    for (int i = 0; i < n; ++i) {
-        int maxRow = i;
-        for (int k = i + 1; k < n; ++k) {
-            if (std::abs(localA[k][i]) > std::abs(localA[maxRow][i])) {
-                maxRow = k;
+    for (int i = 0; i < N; i++)
+    {
+        double maxElem = std::fabs(mat[i][i]);
+        int pivotRow = i;
+        for (int r = i + 1; r < N; r++)
+        {
+            double val = std::fabs(mat[r][i]);
+            if (val > maxElem)
+            {
+                maxElem = val;
+                pivotRow = r;
             }
         }
-        std::swap(localA[i], localA[maxRow]);
-        std::swap(localB[i], localB[maxRow]);
-
-        double diag = localA[i][i];
-        for (int j = i; j < n; ++j) {
-            localA[i][j] /= diag;
+        if (pivotRow != i)
+        {
+            std::swap(mat[i], mat[pivotRow]);
+            std::swap(rhs[i], rhs[pivotRow]);
         }
-        localB[i] /= diag;
 
-        for (int k = i + 1; k < n; ++k) {
-            double factor = localA[k][i];
-            for (int j = i; j < n; ++j) {
-                localA[k][j] -= factor * localA[i][j];
+        if (std::fabs(mat[i][i]) < 1e-15)
+        {
+            throw std::runtime_error("Matrix is singular or near-singular in Gaussian Elimination.");
+        }
+
+        for (int r = i + 1; r < N; r++)
+        {
+            double factor = mat[r][i] / mat[i][i];
+            for (int c = i; c < N; c++)
+            {
+                mat[r][c] -= factor * mat[i][c];
             }
-            localB[k] -= factor * localB[i];
+            rhs[r] -= factor * rhs[i];
         }
     }
 
-    std::vector<double> x(n, 0.0);
-    for (int i = n - 1; i >= 0; --i) {
-        x[i] = localB[i];
-        for (int j = i + 1; j < n; ++j) {
-            x[i] -= localA[i][j] * x[j];
+    std::vector<double> x(N, 0.0);
+    for (int i = N - 1; i >= 0; i--)
+    {
+        if (std::fabs(mat[i][i]) < 1e-15)
+        {
+            throw std::runtime_error("Matrix is singular or near-singular in back substitution.");
         }
+        double sum = rhs[i];
+        for (int c = i + 1; c < N; c++)
+        {
+            sum -= mat[i][c] * x[c];
+        }
+        x[i] = sum / mat[i][i];
     }
 
     return x;
 }
 
-std::vector<std::vector<double>> LinearAlgebraSystem::matrixInverse() {
-    int n = A.size();
-    std::vector<std::vector<double>> augmented(n, std::vector<double>(2 * n, 0.0));
+std::vector<std::vector<double>> inverseMatrix(const std::vector<std::vector<double>>& A)
+{
+    int N = (int)A.size();
+    if (N == 0 || A[0].size() != (size_t)N)
+        throw std::runtime_error("Dimension mismatch in inverseMatrix.");
 
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            augmented[i][j] = A[i][j];
-        }
-        augmented[i][n + i] = 1.0;
+    std::vector<std::vector<double>> mat(A);
+
+    std::vector<std::vector<double>> inv(N, std::vector<double>(N, 0.0));
+    for (int i = 0; i < N; i++)
+    {
+        inv[i][i] = 1.0;
     }
 
-    for (int i = 0; i < n; ++i) {
-        int maxRow = i;
-        for (int k = i + 1; k < n; ++k) {
-            if (std::abs(augmented[k][i]) > std::abs(augmented[maxRow][i])) {
-                maxRow = k;
+    for (int i = 0; i < N; i++)
+    {
+        double maxElem = std::fabs(mat[i][i]);
+        int pivotRow = i;
+        for (int r = i + 1; r < N; r++)
+        {
+            double val = std::fabs(mat[r][i]);
+            if (val > maxElem)
+            {
+                maxElem = val;
+                pivotRow = r;
             }
         }
-        std::swap(augmented[i], augmented[maxRow]);
-
-        double diag = augmented[i][i];
-        for (int j = 0; j < 2 * n; ++j) {
-            augmented[i][j] /= diag;
+        if (pivotRow != i)
+        {
+            std::swap(mat[i], mat[pivotRow]);
+            std::swap(inv[i], inv[pivotRow]);
         }
 
-        for (int k = i + 1; k < n; ++k) {
-            double factor = augmented[k][i];
-            for (int j = 0; j < 2 * n; ++j) {
-                augmented[k][j] -= factor * augmented[i][j];
+        if (std::fabs(mat[i][i]) < 1e-15)
+        {
+            throw std::runtime_error("Matrix is singular or near-singular in matrix inversion.");
+        }
+
+        double pivotVal = mat[i][i];
+        for (int c = 0; c < N; c++)
+        {
+            mat[i][c] /= pivotVal;
+            inv[i][c] /= pivotVal;
+        }
+
+        for (int r = 0; r < N; r++)
+        {
+            if (r != i)
+            {
+                double factor = mat[r][i];
+                for (int c = 0; c < N; c++)
+                {
+                    mat[r][c] -= factor * mat[i][c];
+                    inv[r][c] -= factor * inv[i][c];
+                }
             }
         }
     }
 
-    for (int i = n - 1; i >= 0; --i) {
-        for (int k = i - 1; k >= 0; --k) {
-            double factor = augmented[k][i];
-            for (int j = 0; j < 2 * n; ++j) {
-                augmented[k][j] -= factor * augmented[i][j];
-            }
-        }
-    }
-
-    std::vector<std::vector<double>> inverse(n, std::vector<double>(n, 0.0));
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            inverse[i][j] = augmented[i][n + j];
-        }
-    }
-
-    return inverse;
+    return inv;
 }
 
-std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> LinearAlgebraSystem::luDecomposition() {
-    int n = A.size();
-    std::vector<std::vector<double>> L(n, std::vector<double>(n, 0.0));
-    std::vector<std::vector<double>> U(n, std::vector<double>(n, 0.0));
+std::vector<double> solveLU(const std::vector<std::vector<double>>& A,
+    const std::vector<double>& b)
+{
+    int N = (int)A.size();
+    if (N == 0 || A[0].size() != (size_t)N || b.size() != (size_t)N)
+        throw std::runtime_error("Dimension mismatch in solveLU.");
 
-    for (int i = 0; i < n; ++i) {
-        for (int j = i; j < n; ++j) {
-            U[i][j] = A[i][j];
-            for (int k = 0; k < i; ++k) {
-                U[i][j] -= L[i][k] * U[k][j];
+    std::vector<std::vector<double>> L(N, std::vector<double>(N, 0.0));
+    std::vector<std::vector<double>> U(N, std::vector<double>(N, 0.0));
+
+    for (int i = 0; i < N; i++)
+    {
+        for (int k = i; k < N; k++)
+        {
+            double sum = 0.0;
+            for (int j = 0; j < i; j++)
+            {
+                sum += L[i][j] * U[j][k];
             }
+            U[i][k] = A[i][k] - sum;
         }
 
-        for (int j = i; j < n; ++j) {
-            if (i == j) {
+        for (int k = i; k < N; k++)
+        {
+            if (i == k)
+            {
                 L[i][i] = 1.0;
             }
-            else {
-                L[j][i] = A[j][i];
-                for (int k = 0; k < i; ++k) {
-                    L[j][i] -= L[j][k] * U[k][i];
+            else
+            {
+                double sum = 0.0;
+                for (int j = 0; j < i; j++)
+                {
+                    sum += L[k][j] * U[j][i];
                 }
-                L[j][i] /= U[i][i];
+                if (std::fabs(U[i][i]) < 1e-15)
+                {
+                    throw std::runtime_error("Matrix is singular or near-singular in LU decomposition.");
+                }
+                L[k][i] = (A[k][i] - sum) / U[i][i];
             }
         }
     }
 
-    return std::make_pair(L, U);
-}
-
-std::vector<double> LinearAlgebraSystem::solveLU() {
-    auto luResult = luDecomposition();
-    std::vector<std::vector<double>> L = luResult.first;
-    std::vector<std::vector<double>> U = luResult.second;
-    int n = b.size();
-
-    std::vector<double> y(n, 0.0);
-    for (int i = 0; i < n; ++i) {
-        y[i] = b[i];
-        for (int j = 0; j < i; ++j) {
-            y[i] -= L[i][j] * y[j];
+    std::vector<double> y(N, 0.0);
+    for (int i = 0; i < N; i++)
+    {
+        double sum = b[i];
+        for (int j = 0; j < i; j++)
+        {
+            sum -= L[i][j] * y[j];
         }
+        y[i] = sum;
     }
 
-    std::vector<double> x(n, 0.0);
-    for (int i = n - 1; i >= 0; --i) {
-        x[i] = y[i];
-        for (int j = i + 1; j < n; ++j) {
-            x[i] -= U[i][j] * x[j];
+    std::vector<double> x(N, 0.0);
+    for (int i = N - 1; i >= 0; i--)
+    {
+        double sum = y[i];
+        for (int j = i + 1; j < N; j++)
+        {
+            sum -= U[i][j] * x[j];
         }
-        x[i] /= U[i][i];
+        if (std::fabs(U[i][i]) < 1e-15)
+        {
+            throw std::runtime_error("Matrix is singular or near-singular in back substitution.");
+        }
+        x[i] = sum / U[i][i];
     }
 
     return x;

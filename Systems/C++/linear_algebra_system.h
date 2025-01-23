@@ -1,24 +1,36 @@
-#ifndef LINEAR_ALGEBRA_SYSTEM_H
-#define LINEAR_ALGEBRA_SYSTEM_H
+#ifndef LIN_ALG_H
+#define LIN_ALG_H
 
 #include <vector>
-#include <stdexcept>
 
-class LinearAlgebraSystem {
-private:
-    std::vector<std::vector<double>> A;
-    std::vector<double> b;
+/**
+ * Perform Gaussian Elimination to solve A x = b.
+ *
+ * A: coefficient matrix (N x N)
+ * b: constant terms (N x 1)
+ * Returns the solution vector x (N x 1).
+ */
+std::vector<double> gaussianElimination(const std::vector<std::vector<double>>& A,
+    const std::vector<double>& b);
 
-public:
-    LinearAlgebraSystem(const std::vector<std::vector<double>>& matrix, const std::vector<double>& vector);
+/**
+ * Compute the inverse of a matrix A using row operations on an augmented matrix [A | I].
+ *
+ * A: (N x N) matrix
+ * Returns A_inv: the (N x N) inverse of A.
+ *
+ * Throws if A is singular or near-singular.
+ */
+std::vector<std::vector<double>> inverseMatrix(const std::vector<std::vector<double>>& A);
 
-    std::vector<double> gaussianElimination();
+/**
+ * Solve A x = b using LU decomposition (Doolittle’s method).
+ * A: (N x N) coefficient matrix
+ * b: (N x 1) vector
+ *
+ * Returns x: solution (N x 1) vector.
+ */
+std::vector<double> solveLU(const std::vector<std::vector<double>>& A,
+    const std::vector<double>& b);
 
-    std::vector<std::vector<double>> matrixInverse();
-
-    std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> luDecomposition();
-
-    std::vector<double> solveLU();
-};
-
-#endif
+#endif // LIN_ALG_H

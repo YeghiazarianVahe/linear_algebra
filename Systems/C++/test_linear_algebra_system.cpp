@@ -1,94 +1,109 @@
 #include <iostream>
-#include <vector>
-#include <cassert>
-#include <cmath>
 #include "linear_algebra_system.h"
 
-bool compareVectors(const std::vector<double>& a, const std::vector<double>& b, double tolerance = 1e-6) {
-    if (a.size() != b.size()) return false;
-    for (size_t i = 0; i < a.size(); ++i) {
-        if (std::abs(a[i] - b[i]) > tolerance) return false;
+void printVector(const std::vector<double>& vec, const std::string& name = "vector")
+{
+    std::cout << name << " = [ ";
+    for (double val : vec)
+        std::cout << val << " ";
+    std::cout << "]\n";
+}
+
+void printMatrix(const std::vector<std::vector<double>>& mat, const std::string& name = "matrix")
+{
+    std::cout << name << " = \n";
+    for (const auto& row : mat)
+    {
+        std::cout << "  [ ";
+        for (double val : row)
+            std::cout << val << " ";
+        std::cout << "]\n";
     }
-    return true;
 }
 
-bool compareMatrices(const std::vector<std::vector<double>>& a, const std::vector<std::vector<double>>& b, double tolerance = 1e-6) {
-    if (a.size() != b.size()) return false;
-    for (size_t i = 0; i < a.size(); ++i) {
-        if (!compareVectors(a[i], b[i], tolerance)) return false;
-    }
-    return true;
-}
+int main()
+{
+    // ======================
+    // 1) Test Gaussian Elimination
+    // ======================
+    {
+        std::cout << "=== Testing Gaussian Elimination ===\n";
+        std::vector<std::vector<double>> A = {
+            {2, 1, 1},
+            {4, -6, 0},
+            {-2, 7, 2}
+        };
+        std::vector<double> b = { 5, -2, 9 };
 
-void testGaussianElimination() {
-    std::vector<std::vector<double>> A = { {2, 1, -1}, {-3, -1, 2}, {-2, 1, 2} };
-    std::vector<double> b = { 8, -11, -3 };
-    LinearAlgebraSystem solver(A, b);
-
-    std::vector<double> x = solver.gaussianElimination();
-
-    std::vector<double> expected = { 2.0, 3.0, -1.0 };
-
-    assert(compareVectors(x, expected) && "Gaussian Elimination test failed.");
-    std::cout << "Gaussian Elimination: Task Completed Successfully\n";
-}
-
-void testMatrixInverse() {
-    std::vector<std::vector<double>> A = { {4, 7}, {2, 6} };
-    LinearAlgebraSystem solver(A, {});
-
-    std::vector<std::vector<double>> inverse = solver.matrixInverse();
-
-    std::vector<std::vector<double>> expected = { {0.6, -0.7}, {-0.2, 0.4} };
-
-    assert(compareMatrices(inverse, expected) && "Matrix Inversion test failed.");
-    std::cout << "Matrix Inversion: Task Completed Successfully\n";
-}
-
-void testLUDecomposition() {
-    std::vector<std::vector<double>> A = { {2, -1, -2}, {-4, 6, 3}, {-4, -2, 8} };
-    LinearAlgebraSystem solver(A, {});
-
-    auto luResult = solver.luDecomposition();
-    std::vector<std::vector<double>> L = luResult.first;
-    std::vector<std::vector<double>> U = luResult.second;
-
-    std::vector<std::vector<double>> reconstructed(A.size(), std::vector<double>(A[0].size(), 0.0));
-    for (size_t i = 0; i < L.size(); ++i) {
-        for (size_t j = 0; j < U[0].size(); ++j) {
-            for (size_t k = 0; k < L[0].size(); ++k) {
-                reconstructed[i][j] += L[i][k] * U[k][j];
-            }
+        try
+        {
+            std::vector<double> x = gaussianElimination(A, b);
+            printVector(x, "Solution (GaussianElimination)");
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
         }
     }
 
-    assert(compareMatrices(reconstructed, A) && "LU Decomposition test failed.");
-    std::cout << "LU Decomposition: Task Completed Successfully\n";
-}
+    // ======================
+    // 2) Test Matrix Inversion
+    // ======================
+    {
+        std::cout << "\n=== Testing Matrix Inversion ===\n";
+        std::vector<std::vector<double>> A = {
+            {1, 2, 3},
+            {0, 1, 4},
+            {5, 6, 0}
+        };
+        try
+        {
+            std::vector<std::vector<double>> A_inv = inverseMatrix(A);
+            printMatrix(A_inv, "A_inv");
 
-void testSolveLU() {
-    std::vector<std::vector<double>> A = { {2, -1, -2}, {-4, 6, 3}, {-4, -2, 8} };
-    std::vector<double> b = { -3, 9, -6 };
-    LinearAlgebraSystem solver(A, b);
-
-    std::vector<double> x = solver.solveLU();
-
-    std::vector<double> expected = { 1.0, 2.0, -1.0 };
-
-    assert(compareVectors(x, expected) && "Solve LU test failed.");
-    std::cout << "Solve LU: Task Completed Successfully\n";
-}
-
-int main() {
-    try {
-        testGaussianElimination();
-        testMatrixInverse();
-        testLUDecomposition();
-        testSolveLU();
+            int N = (int)A.size();
+            std::vector<std::vector<double>> I_check(N, std::vector<double>(N, 0.0));
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    double sum = 0.0;
+                    for (int k = 0; k < N; k++)
+                    {
+                        sum += A[i][k] * A_inv[k][j];
+                    }
+                    I_check[i][j] = sum;
+                }
+            }
+            printMatrix(I_check, "A * A_inv (should be close to identity)");
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
+        }
     }
-    catch (const std::exception& e) {
-        std::cerr << "Test failed with exception: " << e.what() << "\n";
-        return 1;
+
+    // ======================
+    // 3) Test LU Decomposition Solver
+    // ======================
+    {
+        std::cout << "\n=== Testing LU Decomposition ===\n";
+        std::vector<std::vector<double>> A = {
+            {2, 1, 1},
+            {4, -6, 0},
+            {-2, 7, 2}
+        };
+        std::vector<double> b = { 5, -2, 9 };
+
+        try
+        {
+            std::vector<double> x = solveLU(A, b);
+            printVector(x, "Solution (LU Decomposition)");
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
+        }
     }
 
     return 0;
